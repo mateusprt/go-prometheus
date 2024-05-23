@@ -1,0 +1,27 @@
+# my global config (esta será a configuração se nada for informado nos jobs)
+global:
+  scrape_interval:     15s # a cada 15 segundos ele vai coletar as métricas. Default é a cada 1 minuto.
+  evaluation_interval: 15s # verifica se teve alterações nas regras do prometheus 15 seconds.  Default é a cada 1 minuto.
+
+# Alertmanager configuration
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# é aqui que configuramos os nossos jobs
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 5s # a cada 5 segundos ele vai coletar as métricas no target informado. Caso não fosse informado, seria usada a config global
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+    - targets:
+      - cadvisor:8080
