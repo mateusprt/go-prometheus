@@ -45,3 +45,8 @@ services:
       - .:/go/src
     ports:
       - 8181:8181
+    depends_on:
+      - redis
+      - prometheus
+      - grafana
+      - cadvisor
