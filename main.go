@@ -24,10 +24,18 @@ var httpRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 	Help: "Count of all HTTP requests",
 }, []string{})
 
+// histogram metric
+var httpDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "goapp_http_request_duration",
+	Help: "Duration in seconds of all HTTP requests",
+}, []string{"handler"})
+
 func main() {
 	r := prometheus.NewRegistry()
+
 	r.MustRegister(onlineUsers)
 	r.MustRegister(httpRequestsTotal)
+	r.MustRegister(httpDuration)
 
 	go func() {
 		for {
@@ -39,8 +47,15 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Hello user"))
 	})
-	http.Handle("/", promhttp.InstrumentHandlerCounter(httpRequestsTotal, home))
 
+	handlerForMeasureDurationAndCountHTTPRequests := promhttp.InstrumentHandlerDuration(
+		httpDuration.MustCurryWith(prometheus.Labels{"handler": "home"}),
+		promhttp.InstrumentHandlerCounter(httpRequestsTotal, home),
+	)
+
+	//http.Handle("/", promhttp.InstrumentHandlerCounter(httpRequestsTotal, home)) using the counter metric
+	http.Handle("/", handlerForMeasureDurationAndCountHTTPRequests)
 	http.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
+
 	log.Fatal(http.ListenAndServe(":8181", nil))
 }
